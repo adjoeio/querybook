@@ -8,8 +8,7 @@ x-querybook-depends-on: &querybook-depends-on
         condition: service_healthy
     elasticsearch:
         condition: service_healthy
-x-querybook-volumes: &querybook-volumes
-    # This is to sync in live code change
+x-querybook-volumes: &querybook-volumes # This is to sync in live code change
     - $PWD:/opt/querybook
     - $PWD/docs_website/static/changelog:/opt/querybook/querybook/static/changelog
     # See https://stackoverflow.com/questions/29181032/add-a-volume-to-docker-but-exclude-a-sub-folder
@@ -96,7 +95,11 @@ services:
             interval: 30s
             timeout: 30s
             retries: 3
-        command: ['--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci']
+        command:
+            [
+                '--character-set-server=utf8mb4',
+                '--collation-server=utf8mb4_unicode_ci',
+            ]
     elasticsearch:
         container_name: querybook_elasticsearch
         image: opensearchproject/opensearch:2.9.0
