@@ -1,7 +1,9 @@
 import logging
 import time
 from typing import Any, Dict, List, Optional
+from urllib.parse import quote as url_quote
 
+import requests
 import trino
 import trino.client
 from trino.exceptions import TrinoUserError
@@ -203,6 +205,65 @@ class TrinoCursor(PrestoCursorMixin[trino.dbapi.Cursor, List[Any]], CursorBaseCl
     @property
     def physical_input_bytes(self) -> int:
         return self._physical_input_bytes
+
+    # ------------------------------------------------------------------
+    # Cancel / Kill query
+    # ------------------------------------------------------------------
+
+    def cancel(self) -> None:
+        """Cancel the running query by sending DELETE /v1/query/{queryId} to Trino.
+
+        This bypasses the trino library's built-in cancel and sends the
+        HTTP DELETE request directly.
+        """
+        query_id = self._query_id
+        if query_id is None:
+            LOG.warning("cancel() called but no query_id is available; nothing to cancel.")
+            return
+
+        self._kill_query(query_id)
+
+    def _kill_query(self, query_id: str) -> None:
+        """Send a DELETE request to Trino's REST API to terminate the query.
+
+        Trino's kill-query endpoint: DELETE /v1/query/{queryId}
+        Expected response: 204 No Content on success.
+
+        Uses the trino library's internal HTTP session which already has
+        authentication (Basic, JWT, etc.) configured, avoiding 401 errors.
+        """
+        request = self._request
+        base_url = f"{request._http_scheme}://{request._host}:{request._port}"
+        path = f"/v1/query/{url_quote(query_id, safe='')}"
+        url = base_url + path
+
+        # Use the trino library's HTTP session which has auth pre-configured.
+        http_session = request._http_session
+
+        LOG.info("%s Sending DELETE %s to cancel query", self._log_prefix, url)
+
+        try:
+            resp = http_session.delete(
+                url,
+                timeout=30,
+            )
+        except requests.RequestException as e:
+            LOG.error("%s Failed to send kill request: %s", self._log_prefix, e)
+            raise RuntimeError(f"Failed to kill query {query_id}: {e}") from e
+
+        if resp.status_code not in (200, 204):
+            body = resp.text
+            LOG.error(
+                "%s Failed to kill query (status %d): %s",
+                self._log_prefix,
+                resp.status_code,
+                body,
+            )
+            raise RuntimeError(
+                f"Failed to kill query {query_id} (status {resp.status_code}): {body}"
+            )
+
+        LOG.info("%s Query cancelled successfully (status %d)", self._log_prefix, resp.status_code)
 
 
 class TrinoClient(ClientBaseClass):
