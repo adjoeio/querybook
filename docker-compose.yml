@@ -34,6 +34,7 @@ services:
             PORT: '${PORT:-10001}'
             APIPORT: '${APIPORT:-3000}'
             HOT_RELOAD: '${HOT_RELOAD:-true}'
+            LITELLM_KEY: '${LITELLM_KEY:-DUMMY_KEY_CHANGE_ME}'
         restart: 'always'
         volumes: *querybook-volumes
         depends_on: *querybook-depends-on
@@ -43,6 +44,8 @@ services:
         tty: true
         stdin_open: true
         command: './querybook/scripts/runservice worker -c 5'
+        environment:
+            LITELLM_KEY: '${LITELLM_KEY:-DUMMY_KEY_CHANGE_ME}'
         volumes: *querybook-volumes
         depends_on: *querybook-depends-on
     scheduler:
@@ -51,6 +54,8 @@ services:
         tty: true
         stdin_open: true
         command: './querybook/scripts/runservice scheduler --pidfile="/opt/celerybeat.pid"'
+        environment:
+            LITELLM_KEY: '${LITELLM_KEY:-DUMMY_KEY_CHANGE_ME}'
         volumes: *querybook-volumes
         depends_on: *querybook-depends-on
     redis:

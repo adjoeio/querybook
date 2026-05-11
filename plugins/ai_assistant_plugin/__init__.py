@@ -1,4 +1,6 @@
-ALL_PLUGIN_AI_ASSISTANTS = []
+from lib.ai_assistant.assistants.litellm_assistant import LiteLLMAssistant
+
+ALL_PLUGIN_AI_ASSISTANTS = [LiteLLMAssistant()]
 
 # Example to add openai assistant
 #

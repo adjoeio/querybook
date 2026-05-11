@@ -1,7 +1,7 @@
 # Public Configs are shared between backend and frontend and are not sensitive
 # --------------- AI Assistant ---------------
 ai_assistant:
-    enabled: false
+    enabled: true
 
     query_title_generation:
         enabled: true
@@ -13,13 +13,16 @@ ai_assistant:
         enabled: true
 
     table_vector_search:
-        enabled: false
+        enabled: true
 
     query_vector_search:
-        enabled: false
+        enabled: true
 
     sql_complete:
-        enabled: false
+        enabled: true
+
+    data_doc_title_generation:
+      enabled: true
 
 survey:
     global_response_cooldown: 2592000 # 30 days
